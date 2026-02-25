@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PIPELINE_STAGES, TYPE_OPTIONS, STAGE_META, driveThumb, Tag, Modal, Inp, Sel, Txt, ChannelPicker, CampaignProgress, ContentForm } from "./Components.jsx";
 
-export function Campaigns({ campaigns, setCampaigns, allItems, setAllItems }) {
+export function Campaigns({ campaigns, setCampaigns, allItems, setAllItems, products=[], setProducts=()=>{} }) {
   const [active, setActive] = useState(null);
   const [activeTab, setActiveTab] = useState("content");
   const [showCampForm, setShowCampForm] = useState(false);
@@ -155,7 +155,7 @@ export function Campaigns({ campaigns, setCampaigns, allItems, setAllItems }) {
             <ContentForm initial={editContent} campaigns={campaigns} onSave={saveContent}
               onDelete={editContent?.id?deleteContent:null}
               onClose={()=>{setShowContentForm(false);setEditContent(null);}}
-              lockCampaignId={true} />
+              lockCampaignId={true} products={products} setProducts={setProducts} />
           </Modal>
         )}
       </div>
