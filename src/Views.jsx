@@ -43,6 +43,7 @@ function ContentCard({ item, campaigns, onClick, compact }) {
 
 // ── PIPELINE ──────────────────────────────────────────────────────────────
 export function Pipeline({ items, setItems, campaigns, products, setProducts }) {
+  const isMobile = useIsMobile();
   const [view, setView] = useState("kanban");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -82,17 +83,17 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
                 onDragLeave={()=>setDragOver(null)}
                 onDrop={()=>{if(dragItem&&dragItem.stage!==stage)moveStage(dragItem,stage);setDragItem(null);setDragOver(null);}}
                 className="flex-shrink-0 rounded-xl p-3 transition-all"
-                style={{width:230,background:isOver?"#fff0f4":"#f7f6f5",border:isOver?"2px dashed #F05881":"2px solid transparent"}}>
+                style={{width:isMobile?160:230,background:isOver?"#fff0f4":"#f7f6f5",border:isOver?"2px dashed #F05881":"2px solid transparent"}}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{background:STAGE_META[stage].color}} />
-                    <span className="text-xs font-semibold text-stone-600">{stage}</span>
+                    <span className="text-xs font-semibold text-stone-600">{isMobile ? stage.split(" ")[0] : stage}</span>
                   </div>
                   <span className="text-xs text-stone-400">{stageItems.length}</span>
                 </div>
                 {stageItems.map(item=>(
                   <div key={item.id} draggable onDragStart={()=>setDragItem(item)} style={{opacity:dragItem?.id===item.id?0.5:1}}>
-                    <ContentCard item={item} campaigns={campaigns} onClick={()=>openEdit(item)} />
+                    <ContentCard item={item} campaigns={campaigns} onClick={()=>openEdit(item)} compact={isMobile} />
                   </div>
                 ))}
                 {!stageItems.length && <p className="text-xs text-stone-300 text-center mt-4">Drop here</p>}
@@ -155,6 +156,7 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────
 export function Calendar({ items, setItems, campaigns, products, setProducts }) {
+  const isMobile = useIsMobile();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -200,8 +202,97 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
     );
   };
 
-  const firstDay = new Date(year,month,1).getDay();
+  // Mobile: upcoming content list
+  if (isMobile) {
+    const upcoming = [...items]
+      .filter(i => i.date)
+      .sort((a,b) => a.date.localeCompare(b.date));
+    const undated = items.filter(i => !i.date);
+    const grouped = upcoming.reduce((acc, item) => {
+      acc[item.date] = acc[item.date] || [];
+      acc[item.date].push(item);
+      return acc;
+    }, {});
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-stone-800">Calendar</h2>
+          <button onClick={()=>openNew()} style={{background:"#F05881"}} className="hover:opacity-90 text-white text-sm px-4 py-3 rounded-lg font-medium">+ Add</button>
+        </div>
+        {Object.keys(grouped).length === 0 && undated.length === 0 && (
+          <p className="text-stone-400 text-sm">No content scheduled yet.</p>
+        )}
+        {Object.entries(grouped).map(([date, dayItems]) => {
+          const d = new Date(date + "T00:00:00");
+          const isPast = d < new Date(today.toDateString());
+          return (
+            <div key={date} className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color: isPast ? "#a8a29e" : "#F05881"}}>
+                {d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
+                {d.toDateString() === today.toDateString() && " · Today"}
+              </p>
+              {dayItems.map(item => {
+                const mc = STAGE_META[item.stage]||STAGE_META["Idea"];
+                const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
+                const channels = Array.isArray(item.channels)?item.channels:[];
+                const thumb = driveThumb(item.driveUrl);
+                return (
+                  <div key={item.id} onClick={()=>openEdit(item)}
+                    className="bg-white rounded-xl border border-stone-100 p-3.5 mb-2 cursor-pointer flex gap-3 items-center"
+                    style={{borderLeft:`3px solid ${mc.color}`}}>
+                    {thumb && <img src={thumb} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" onError={e=>e.target.style.display="none"} />}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-stone-800 text-sm">{item.title}</p>
+                      {campaign && <p className="text-xs mt-0.5" style={{color:"#F05881"}}>↗ {campaign.name}</p>}
+                      {item.draftCopy && <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">{item.draftCopy}</p>}
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:mc.color+"22",color:mc.color}}>{item.stage}</span>
+                        {channels.slice(0,2).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        {undated.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-stone-400">Unscheduled</p>
+            {undated.map(item => {
+              const mc = STAGE_META[item.stage]||STAGE_META["Idea"];
+              const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
+              const channels = Array.isArray(item.channels)?item.channels:[];
+              return (
+                <div key={item.id} onClick={()=>openEdit(item)}
+                  className="bg-white rounded-xl border border-stone-100 p-3.5 mb-2 cursor-pointer"
+                  style={{borderLeft:`3px solid ${mc.color}`}}>
+                  <p className="font-medium text-stone-800 text-sm">{item.title}</p>
+                  {campaign && <p className="text-xs mt-0.5" style={{color:"#F05881"}}>↗ {campaign.name}</p>}
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:mc.color+"22",color:mc.color}}>{item.stage}</span>
+                    {channels.slice(0,2).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {showForm && (
+          <Modal title={editItem?.id?"Edit Content":"New Content"} onClose={()=>setShowForm(false)}>
+            <ContentForm initial={editItem} campaigns={campaigns} onSave={saveItem}
+              onDelete={editItem?.id?()=>setItems(prev=>prev.filter(i=>i.id!==editItem.id)):null}
+              onClose={()=>setShowForm(false)} products={products} setProducts={setProducts} />
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop calendar
   const cells = Array.from({length:firstDay+daysInMonth},(_,i)=>i<firstDay?null:i-firstDay+1);
+  // Desktop calendar return
   const weekDays = Array.from({length:7},(_,i)=>{ const d=new Date(weekStart); d.setDate(d.getDate()+i); return d; });
   const prevWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); };
   const nextWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); };
