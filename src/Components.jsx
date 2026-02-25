@@ -165,7 +165,7 @@ export function CampaignProgress({ items }) {
   );
 }
 
-export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, lockCampaignId, products=[] }) {
+export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, lockCampaignId, products=[], setProducts=()=>{} }) {
   const [form, setForm] = useState({
     title:"", type:TYPE_OPTIONS[0], channels:["Instagram"],
     stage:"Idea", campaignId:"", date:"", notes:"", product:"",
@@ -181,7 +181,7 @@ export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, loc
     <>
       <Inp label="Title" value={form.title} onChange={e=>f("title",e.target.value)} placeholder="Content title" />
       <ProductSelector value={form.product} onChange={v=>f("product",v)} products={products} onManage={()=>setShowProductManager(true)} />
-      {showProductManager && <ProductManager products={products} setProducts={()=>{}} onClose={()=>setShowProductManager(false)} />}
+      {showProductManager && <ProductManager products={products} setProducts={setProducts} onClose={()=>setShowProductManager(false)} />}
       <Sel label="Content type" options={TYPE_OPTIONS} value={form.type} onChange={e=>f("type",e.target.value)} />
       <ChannelPicker selected={form.channels||[]} onChange={v=>f("channels",v)} />
       <StagePicker value={form.stage} onChange={v=>f("stage",v)} />
