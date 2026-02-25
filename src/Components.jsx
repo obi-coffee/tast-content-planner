@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ProductSelector, ProductManager } from "./Products.jsx";
 
 export const PIPELINE_STAGES = ["Idea", "In Campaign", "In Production", "Ready", "Published"];
 export const CHANNEL_OPTIONS = ["Instagram", "Email", "Website", "TikTok", "LinkedIn"];
@@ -164,13 +165,14 @@ export function CampaignProgress({ items }) {
   );
 }
 
-export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, lockCampaignId }) {
+export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, lockCampaignId, products=[] }) {
   const [form, setForm] = useState({
     title:"", type:TYPE_OPTIONS[0], channels:["Instagram"],
     stage:"Idea", campaignId:"", date:"", notes:"", product:"",
     draftCopy:"", driveUrl:"", owner:"", seq:0,
     ...initial
   });
+  const [showProductManager, setShowProductManager] = useState(false);
   const f = (k,v) => setForm(p=>({...p,[k]:v}));
   const save = () => { if (!form.title.trim()) return; onSave(form); onClose(); };
   const linkedCampaign = campaigns.find(c=>String(c.id)===String(form.campaignId));
@@ -178,7 +180,8 @@ export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, loc
   return (
     <>
       <Inp label="Title" value={form.title} onChange={e=>f("title",e.target.value)} placeholder="Content title" />
-      <Inp label="Product reference" value={form.product} onChange={e=>f("product",e.target.value)} placeholder="e.g. Ethiopia Anaerobic Natural" />
+      <ProductSelector value={form.product} onChange={v=>f("product",v)} products={products} onManage={()=>setShowProductManager(true)} />
+      {showProductManager && <ProductManager products={products} setProducts={()=>{}} onClose={()=>setShowProductManager(false)} />}
       <Sel label="Content type" options={TYPE_OPTIONS} value={form.type} onChange={e=>f("type",e.target.value)} />
       <ChannelPicker selected={form.channels||[]} onChange={v=>f("channels",v)} />
       <StagePicker value={form.stage} onChange={v=>f("stage",v)} />
