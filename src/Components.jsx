@@ -1,4 +1,5 @@
-// ── Constants ──────────────────────────────────────────────────────────────
+import { useState } from "react";
+
 export const PIPELINE_STAGES = ["Idea", "In Campaign", "In Production", "Ready", "Published"];
 export const CHANNEL_OPTIONS = ["Instagram", "Email", "Website", "TikTok", "LinkedIn"];
 export const TYPE_OPTIONS = ["Brewing Guide", "Product Launch", "Origin Story", "Processing Method", "Campaign", "Community", "Other"];
@@ -12,13 +13,13 @@ export const STAGE_META = {
 };
 
 export const TYPE_COLORS = {
-  "Brewing Guide":      "bg-[#fa8f9c]/25 text-[#a12f52]",
-  "Product Launch":     "bg-[#F05881]/20 text-[#a12f52]",
-  "Origin Story":       "bg-[#ef4056]/15 text-[#a12f52]",
-  "Processing Method":  "bg-[#fa8f9c]/30 text-[#a12f52]",
-  "Campaign":           "bg-[#a12f52]/15 text-[#a12f52]",
-  "Community":          "bg-[#F05881]/10 text-[#a12f52]",
-  "Other":              "bg-stone-100 text-stone-600",
+  "Brewing Guide":     "bg-[#fa8f9c]/25 text-[#a12f52]",
+  "Product Launch":    "bg-[#F05881]/20 text-[#a12f52]",
+  "Origin Story":      "bg-[#ef4056]/15 text-[#a12f52]",
+  "Processing Method": "bg-[#fa8f9c]/30 text-[#a12f52]",
+  "Campaign":          "bg-[#a12f52]/15 text-[#a12f52]",
+  "Community":         "bg-[#F05881]/10 text-[#a12f52]",
+  "Other":             "bg-stone-100 text-stone-600",
 };
 
 export const defaultBrandVoice = `TONE
@@ -39,7 +40,6 @@ WRITING SAMPLES
 "Every bag tells a story that started long before the roast. We're just the last chapter."
 "Specialty coffee isn't about exclusivity. It's about paying attention."`;
 
-// ── Drive URL converter ────────────────────────────────────────────────────
 export function driveThumb(url) {
   if (!url) return null;
   const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -49,15 +49,14 @@ export function driveThumb(url) {
   return url;
 }
 
-// ── Primitives ─────────────────────────────────────────────────────────────
 export function Tag({ label, colorClass, style }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colorClass||""}`} style={style}>{label}</span>;
 }
 
-export function Modal({ title, onClose, children, wide }) {
+export function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white rounded-2xl shadow-xl w-full max-h-[90vh] overflow-y-auto ${wide?"max-w-2xl":"max-w-lg"}`}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-stone-100">
           <h2 className="font-semibold text-stone-800 text-lg">{title}</h2>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600 text-xl">✕</button>
@@ -121,12 +120,11 @@ export function StagePicker({ value, onChange }) {
       <label className="block text-sm font-medium text-stone-600 mb-2">Pipeline Stage</label>
       <div className="flex flex-wrap gap-2">
         {PIPELINE_STAGES.map(s => {
-          const m = STAGE_META[s];
           const active = value===s;
           return (
             <button key={s} type="button" onClick={()=>onChange(s)}
               className="text-xs px-3 py-1.5 rounded-full border font-medium transition-all"
-              style={active?{background:m.color,color:"white",borderColor:m.color}:{background:"white",color:"#78716c",borderColor:"#e7e5e4"}}>
+              style={active?{background:STAGE_META[s].color,color:"white",borderColor:STAGE_META[s].color}:{background:"white",color:"#78716c",borderColor:"#e7e5e4"}}>
               {s}
             </button>
           );
@@ -140,7 +138,7 @@ export function CampaignProgress({ items }) {
   const total = items.length;
   if (!total) return <p className="text-xs text-stone-300 mb-4">No content yet.</p>;
   return (
-    <div className="mb-5">
+    <div className="mb-4">
       <div className="flex rounded-full overflow-hidden h-2 mb-2">
         {PIPELINE_STAGES.map(s => {
           const count = items.filter(i=>i.stage===s).length;
@@ -180,7 +178,7 @@ export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, loc
   return (
     <>
       <Inp label="Title" value={form.title} onChange={e=>f("title",e.target.value)} placeholder="Content title" />
-      <Inp label="Product reference (optional)" value={form.product} onChange={e=>f("product",e.target.value)} placeholder="e.g. Ethiopia Anaerobic Natural" />
+      <Inp label="Product reference" value={form.product} onChange={e=>f("product",e.target.value)} placeholder="e.g. Ethiopia Anaerobic Natural" />
       <Sel label="Content type" options={TYPE_OPTIONS} value={form.type} onChange={e=>f("type",e.target.value)} />
       <ChannelPicker selected={form.channels||[]} onChange={v=>f("channels",v)} />
       <StagePicker value={form.stage} onChange={v=>f("stage",v)} />
@@ -195,24 +193,22 @@ export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, loc
         </div>
       )}
       {linkedCampaign?.keyMessage && (
-        <div className="mb-3 p-3 rounded-lg border text-xs text-stone-600 leading-relaxed" style={{background:"#fff0f4",borderColor:"#fa8f9c"}}>
-          <p className="font-semibold text-[#F05881] mb-1">↗ Campaign direction · {linkedCampaign.name}</p>
-          <p>{linkedCampaign.keyMessage}</p>
+        <div className="mb-3 p-3 rounded-lg border text-xs" style={{background:"#fff0f4",borderColor:"#fa8f9c"}}>
+          <p className="font-semibold mb-1" style={{color:"#F05881"}}>↗ {linkedCampaign.name}</p>
+          <p className="text-stone-600">{linkedCampaign.keyMessage}</p>
         </div>
       )}
-      <Inp label="Scheduled date (optional)" type="date" value={form.date} onChange={e=>f("date",e.target.value)} />
-      <Inp label="Owner (optional)" value={form.owner} onChange={e=>f("owner",e.target.value)} placeholder="e.g. Obi" />
+      <Inp label="Scheduled date" type="date" value={form.date} onChange={e=>f("date",e.target.value)} />
+      <Inp label="Owner" value={form.owner} onChange={e=>f("owner",e.target.value)} placeholder="e.g. Obi" />
       <Txt label="Draft copy / caption" rows={3} value={form.draftCopy} onChange={e=>f("draftCopy",e.target.value)} placeholder="Paste your draft caption or copy here..." />
       <Txt label="Notes" value={form.notes} onChange={e=>f("notes",e.target.value)} placeholder="Production notes, links, angles..." />
       <div className="mb-3">
         <label className="block text-sm font-medium text-stone-600 mb-1">Google Drive image URL</label>
         <input value={form.driveUrl} onChange={e=>f("driveUrl",e.target.value)}
-          placeholder="Paste Drive share link — set to 'Anyone with link can view'"
+          placeholder="Paste Drive share link"
           className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F05881]/40" />
-        {form.driveUrl && (
-          <img src={driveThumb(form.driveUrl)} alt="preview" className="mt-2 w-full rounded-lg object-cover" style={{maxHeight:160}} onError={e=>e.target.style.display="none"} />
-        )}
-        <p className="text-xs text-stone-300 mt-1">File must be shared as "Anyone with the link can view"</p>
+        {form.driveUrl && <img src={driveThumb(form.driveUrl)} alt="preview" className="mt-2 w-full rounded-lg object-cover" style={{maxHeight:160}} onError={e=>e.target.style.display="none"} />}
+        <p className="text-xs text-stone-300 mt-1">File must be "Anyone with the link can view"</p>
       </div>
       <div className="flex gap-2 mt-4">
         <button onClick={save} style={{background:"#F05881"}} className="flex-1 hover:opacity-90 text-white py-2 rounded-lg font-medium text-sm">Save</button>
@@ -221,6 +217,3 @@ export function ContentForm({ initial, campaigns, onSave, onDelete, onClose, loc
     </>
   );
 }
-
-// need useState in scope for ContentForm
-import { useState } from "react";
