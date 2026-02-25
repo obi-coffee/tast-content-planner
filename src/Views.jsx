@@ -155,6 +155,15 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
 }
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────
+function getItemColor(item, products) {
+  if (item.product && products?.length) {
+    const matched = products.find(p => p.name === item.product);
+    if (matched) return { color: matched.color, border: matched.border };
+  }
+  const mc = STAGE_META[item.stage] || STAGE_META["Idea"];
+  return { color: mc.color };
+}
+
 export function Calendar({ items, setItems, campaigns, products, setProducts }) {
   const isMobile = useIsMobile();
   const today = new Date();
@@ -186,12 +195,12 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
         <div className="space-y-0.5">
           {dayItems.map(item=>{
             const thumb = driveThumb(item.driveUrl);
-            const mc = STAGE_META[item.stage]||STAGE_META["Idea"];
+            const { color, border } = getItemColor(item, products);
             return (
-              <div key={item.id} onClick={e=>{e.stopPropagation();openEdit(item);}} className="cursor-pointer rounded overflow-hidden" style={{border:`1px solid ${mc.color}33`}}>
+              <div key={item.id} onClick={e=>{e.stopPropagation();openEdit(item);}} className="cursor-pointer rounded overflow-hidden" style={{border:`1px solid ${color}33`}}>
                 {thumb && view==="week" && <img src={thumb} alt="" className="w-full object-cover" style={{height:56}} onError={e=>e.target.style.display="none"} />}
-                <div className="px-1.5 py-0.5" style={{background:mc.color+"22"}}>
-                  <p className="text-xs font-medium truncate" style={{color:mc.color}}>{item.title}</p>
+                <div className="px-1.5 py-0.5" style={{background:color+"22"}}>
+                  <p className="text-xs font-medium truncate" style={{color}}>{item.title}</p>
                   {view==="week"&&item.draftCopy && <p className="text-xs text-stone-400 line-clamp-2 mt-0.5">{item.draftCopy}</p>}
                 </div>
               </div>
@@ -233,21 +242,21 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
                 {d.toDateString() === today.toDateString() && " · Today"}
               </p>
               {dayItems.map(item => {
-                const mc = STAGE_META[item.stage]||STAGE_META["Idea"];
+                const { color, border } = getItemColor(item, products);
                 const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
                 const channels = Array.isArray(item.channels)?item.channels:[];
                 const thumb = driveThumb(item.driveUrl);
                 return (
                   <div key={item.id} onClick={()=>openEdit(item)}
                     className="bg-white rounded-xl border border-stone-100 p-3.5 mb-2 cursor-pointer flex gap-3 items-center"
-                    style={{borderLeft:`3px solid ${mc.color}`}}>
+                    style={{borderLeft:`3px solid ${color}`}}>
                     {thumb && <img src={thumb} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" onError={e=>e.target.style.display="none"} />}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-stone-800 text-sm">{item.title}</p>
                       {campaign && <p className="text-xs mt-0.5" style={{color:"#F05881"}}>↗ {campaign.name}</p>}
                       {item.draftCopy && <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">{item.draftCopy}</p>}
                       <div className="flex gap-1 mt-1 flex-wrap">
-                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:mc.color+"22",color:mc.color}}>{item.stage}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:color+"22",color:color}}>{item.stage}</span>
                         {channels.slice(0,2).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
                       </div>
                     </div>
