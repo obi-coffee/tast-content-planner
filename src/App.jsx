@@ -5,32 +5,21 @@ import { Campaigns } from "./Campaigns.jsx";
 
 const TABS = ["Pipeline", "Calendar", "Campaigns", "Brand Voice", "Captions"];
 
+// localStorage helpers (replaces window.storage from Claude.ai)
+const store = {
+  get: (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
 export default function App() {
   const [tab, setTab] = useState(0);
-  const [items, setItems] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [brandVoice, setBrandVoice] = useState(defaultBrandVoice);
-  const [loaded, setLoaded] = useState(false);
+  const [items, setItems] = useState(() => store.get("tast_items") || []);
+  const [campaigns, setCampaigns] = useState(() => store.get("tast_campaigns") || []);
+  const [brandVoice, setBrandVoice] = useState(() => store.get("tast_voice") || defaultBrandVoice);
 
-  useEffect(()=>{
-    (async()=>{
-      try {
-        const [it,ca,bv] = await Promise.all([
-          window.storage.get("tast_items").catch(()=>null),
-          window.storage.get("tast_campaigns").catch(()=>null),
-          window.storage.get("tast_voice").catch(()=>null),
-        ]);
-        if(it) setItems(JSON.parse(it.value));
-        if(ca) setCampaigns(JSON.parse(ca.value));
-        if(bv) setBrandVoice(bv.value);
-      } catch {}
-      setLoaded(true);
-    })();
-  },[]);
-
-  useEffect(()=>{if(loaded)window.storage.set("tast_items",JSON.stringify(items)).catch(()=>{});},[items,loaded]);
-  useEffect(()=>{if(loaded)window.storage.set("tast_campaigns",JSON.stringify(campaigns)).catch(()=>{});},[campaigns,loaded]);
-  useEffect(()=>{if(loaded)window.storage.set("tast_voice",brandVoice).catch(()=>{});},[brandVoice,loaded]);
+  useEffect(() => store.set("tast_items", items), [items]);
+  useEffect(() => store.set("tast_campaigns", campaigns), [campaigns]);
+  useEffect(() => store.set("tast_voice", brandVoice), [brandVoice]);
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
@@ -58,15 +47,13 @@ export default function App() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-4 py-6">
-        {!loaded ? <p className="text-stone-400 text-sm">Loading...</p> : (
-          <>
-            {tab===0 && <Pipeline items={items} setItems={setItems} campaigns={campaigns} />}
-            {tab===1 && <Calendar items={items} setItems={setItems} campaigns={campaigns} />}
-            {tab===2 && <Campaigns campaigns={campaigns} setCampaigns={setCampaigns} allItems={items} setAllItems={setItems} />}
-            {tab===3 && <BrandVoice voice={brandVoice} setVoice={setBrandVoice} />}
-            {tab===4 && <Captions brandVoice={brandVoice} />}
-          </>
-        )}
+        <>
+          {tab===0 && <Pipeline items={items} setItems={setItems} campaigns={campaigns} />}
+          {tab===1 && <Calendar items={items} setItems={setItems} campaigns={campaigns} />}
+          {tab===2 && <Campaigns campaigns={campaigns} setCampaigns={setCampaigns} allItems={items} setAllItems={setItems} />}
+          {tab===3 && <BrandVoice voice={brandVoice} setVoice={setBrandVoice} />}
+          {tab===4 && <Captions brandVoice={brandVoice} />}
+        </>
       </div>
     </div>
   );
