@@ -1,29 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PIPELINE_STAGES, CHANNEL_OPTIONS, TYPE_OPTIONS, STAGE_META, TYPE_COLORS, driveThumb, Tag, Modal, Inp, Sel, Txt, ChannelPicker, CampaignProgress, ContentForm } from "./Components.jsx";
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
+// ── Mobile detection hook ──────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(()=>window.innerWidth < 768);
+  useEffect(()=>{
+    const fn = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  },[]);
+  return isMobile;
+}
+
 // ── Content Card ───────────────────────────────────────────────────────────
-function ContentCard({ item, campaigns, onClick }) {
+function ContentCard({ item, campaigns, onClick, compact }) {
   const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
   const channels = Array.isArray(item.channels)?item.channels:item.channel?[item.channel]:[];
   const thumb = driveThumb(item.driveUrl);
   return (
     <div onClick={onClick} className="bg-white rounded-xl border border-stone-100 shadow-sm cursor-pointer hover:border-[#fa8f9c] transition-colors mb-2 overflow-hidden">
-      {thumb && <img src={thumb} alt="" className="w-full object-cover" style={{height:100}} onError={e=>e.target.style.display="none"} />}
-      <div className="p-3">
-        <span className="font-medium text-stone-800 text-sm">{item.title}</span>
-        {item.product && <p className="text-xs text-stone-400 mt-0.5">{item.product}</p>}
-        {campaign && <div className="mt-1.5"><span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{background:"#fff0f4",color:"#F05881"}}>↗ {campaign.name}</span></div>}
-        {campaign?.keyMessage && <p className="text-xs text-stone-400 mt-1 line-clamp-1 italic">"{campaign.keyMessage}"</p>}
-        {item.draftCopy && <p className="text-xs text-stone-500 mt-1 line-clamp-2 border-l-2 pl-2 border-stone-200">{item.draftCopy}</p>}
-        <div className="flex flex-wrap gap-1 mt-2">
-          <Tag label={item.type} colorClass={TYPE_COLORS[item.type]||TYPE_COLORS["Other"]} />
-          {channels.map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
+      {thumb && !compact && <img src={thumb} alt="" className="w-full object-cover" style={{height:100}} onError={e=>e.target.style.display="none"} />}
+      <div className={compact ? "p-2" : "p-3"}>
+        <span className={`font-medium text-stone-800 ${compact ? "text-xs" : "text-sm"}`}>{item.title}</span>
+        {!compact && item.product && <p className="text-xs text-stone-400 mt-0.5">{item.product}</p>}
+        {!compact && campaign && <div className="mt-1.5"><span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{background:"#fff0f4",color:"#F05881"}}>↗ {campaign.name}</span></div>}
+        {!compact && campaign?.keyMessage && <p className="text-xs text-stone-400 mt-1 line-clamp-1 italic">"{campaign.keyMessage}"</p>}
+        {!compact && item.draftCopy && <p className="text-xs text-stone-500 mt-1 line-clamp-2 border-l-2 pl-2 border-stone-200">{item.draftCopy}</p>}
+        <div className={`flex flex-wrap gap-1 ${compact ? "mt-1" : "mt-2"}`}>
+          {!compact && <Tag label={item.type} colorClass={TYPE_COLORS[item.type]||TYPE_COLORS["Other"]} />}
+          {channels.slice(0, compact ? 1 : 99).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
+          {compact && channels.length > 1 && <span className="text-xs text-stone-300">+{channels.length-1}</span>}
         </div>
-        {item.date && <p className="text-xs text-stone-300 mt-1.5">{item.date}</p>}
-        {item.owner && <p className="text-xs text-stone-300 mt-0.5">Owner: {item.owner}</p>}
+        {item.date && <p className={`text-stone-300 mt-1 ${compact ? "text-xs" : "text-xs"}`}>{item.date}</p>}
+        {!compact && item.owner && <p className="text-xs text-stone-300 mt-0.5">Owner: {item.owner}</p>}
       </div>
     </div>
   );
