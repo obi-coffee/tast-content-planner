@@ -8,6 +8,7 @@ export const ROAST_TYPES = [
   { label: "Blend",             color: "#ef4056" },
   { label: "Decaf",             color: "#fbf9f3", border: "#e0ded8" },
   { label: "Special Release",   color: "#0000ff" },
+  { label: "App",               color: "#00ff00" },
 ];
 
 export function ProductDot({ color, border }) {
