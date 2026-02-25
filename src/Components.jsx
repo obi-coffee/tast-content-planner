@@ -56,13 +56,13 @@ export function Tag({ label, colorClass, style }) {
 
 export function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 flex items-end md:items-center justify-center z-50 md:p-4">
+      <div className="bg-white w-full md:rounded-2xl md:max-w-lg rounded-t-2xl shadow-xl max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-stone-100">
           <h2 className="font-semibold text-stone-800 text-lg">{title}</h2>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 text-xl">✕</button>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 text-xl w-10 h-10 flex items-center justify-center">✕</button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 pb-8">{children}</div>
       </div>
     </div>
   );
@@ -72,7 +72,7 @@ export function Inp({ label, ...p }) {
   return (
     <div className="mb-3">
       {label && <label className="block text-sm font-medium text-stone-600 mb-1">{label}</label>}
-      <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F05881]/40" {...p} />
+      <input className="w-full border border-stone-200 rounded-lg px-3 py-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F05881]/40" {...p} />
     </div>
   );
 }
@@ -81,7 +81,7 @@ export function Sel({ label, options, ...p }) {
   return (
     <div className="mb-3">
       {label && <label className="block text-sm font-medium text-stone-600 mb-1">{label}</label>}
-      <select className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white focus:ring-2 focus:ring-[#F05881]/40" {...p}>
+      <select className="w-full border border-stone-200 rounded-lg px-3 py-3 md:py-2 text-sm focus:outline-none bg-white focus:ring-2 focus:ring-[#F05881]/40" {...p}>
         {options.map(o => <option key={o}>{o}</option>)}
       </select>
     </div>
