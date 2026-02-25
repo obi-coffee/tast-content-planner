@@ -134,7 +134,7 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
         <Modal title={editItem?.id?"Edit Content":"New Content"} onClose={()=>setShowForm(false)}>
           <ContentForm initial={editItem} campaigns={campaigns} onSave={saveItem}
             onDelete={editItem?.id?()=>setItems(prev=>prev.filter(i=>i.id!==editItem.id)):null}
-            onClose={()=>setShowForm(false)} />
+            onClose={()=>setShowForm(false)} products={products} setProducts={setProducts} />
         </Modal>
       )}
     </div>
@@ -282,7 +282,7 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
         <Modal title={editItem?.id?"Edit Content":"New Content"} onClose={()=>setShowForm(false)}>
           <ContentForm initial={editItem} campaigns={campaigns} onSave={saveItem}
             onDelete={editItem?.id?()=>setItems(prev=>prev.filter(i=>i.id!==editItem.id)):null}
-            onClose={()=>setShowForm(false)} />
+            onClose={()=>setShowForm(false)} products={products} setProducts={setProducts} />
         </Modal>
       )}
     </div>
