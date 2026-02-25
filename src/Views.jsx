@@ -4,7 +4,7 @@ import { PIPELINE_STAGES, CHANNEL_OPTIONS, TYPE_OPTIONS, STAGE_META, TYPE_COLORS
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-// ── Mobile detection hook ──────────────────────────────────────────────────
+// ── Mobile detection ───────────────────────────────────────────────────────
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth < 768);
   useEffect(()=>{
@@ -15,6 +15,16 @@ function useIsMobile() {
   return isMobile;
 }
 
+// ── Product color helper ───────────────────────────────────────────────────
+function getItemColor(item, products) {
+  if (item.product && products?.length) {
+    const matched = products.find(p => p.name === item.product);
+    if (matched) return { color: matched.color, border: matched.border };
+  }
+  const mc = STAGE_META[item.stage] || STAGE_META["Idea"];
+  return { color: mc.color };
+}
+
 // ── Content Card ───────────────────────────────────────────────────────────
 function ContentCard({ item, campaigns, onClick, compact }) {
   const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
@@ -23,18 +33,18 @@ function ContentCard({ item, campaigns, onClick, compact }) {
   return (
     <div onClick={onClick} className="bg-white rounded-xl border border-stone-100 shadow-sm cursor-pointer hover:border-[#fa8f9c] transition-colors mb-2 overflow-hidden">
       {thumb && !compact && <img src={thumb} alt="" className="w-full object-cover" style={{height:100}} onError={e=>e.target.style.display="none"} />}
-      <div className={compact ? "p-2" : "p-3"}>
-        <span className={`font-medium text-stone-800 ${compact ? "text-xs" : "text-sm"}`}>{item.title}</span>
+      <div className={compact?"p-2":"p-3"}>
+        <span className={`font-medium text-stone-800 ${compact?"text-xs":"text-sm"}`}>{item.title}</span>
         {!compact && item.product && <p className="text-xs text-stone-400 mt-0.5">{item.product}</p>}
         {!compact && campaign && <div className="mt-1.5"><span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{background:"#fff0f4",color:"#F05881"}}>↗ {campaign.name}</span></div>}
         {!compact && campaign?.keyMessage && <p className="text-xs text-stone-400 mt-1 line-clamp-1 italic">"{campaign.keyMessage}"</p>}
         {!compact && item.draftCopy && <p className="text-xs text-stone-500 mt-1 line-clamp-2 border-l-2 pl-2 border-stone-200">{item.draftCopy}</p>}
-        <div className={`flex flex-wrap gap-1 ${compact ? "mt-1" : "mt-2"}`}>
+        <div className={`flex flex-wrap gap-1 ${compact?"mt-1":"mt-2"}`}>
           {!compact && <Tag label={item.type} colorClass={TYPE_COLORS[item.type]||TYPE_COLORS["Other"]} />}
-          {channels.slice(0, compact ? 1 : 99).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
-          {compact && channels.length > 1 && <span className="text-xs text-stone-300">+{channels.length-1}</span>}
+          {channels.slice(0, compact?1:99).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
+          {compact && channels.length>1 && <span className="text-xs text-stone-300">+{channels.length-1}</span>}
         </div>
-        {item.date && <p className={`text-stone-300 mt-1 ${compact ? "text-xs" : "text-xs"}`}>{item.date}</p>}
+        {item.date && <p className="text-xs text-stone-300 mt-1">{item.date}</p>}
         {!compact && item.owner && <p className="text-xs text-stone-300 mt-0.5">Owner: {item.owner}</p>}
       </div>
     </div>
@@ -68,7 +78,8 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
                 style={view===v?{background:"#F05881",color:"white"}:{color:"#78716c"}}>{l}</button>
             ))}
           </div>
-          <button onClick={()=>{setEditItem(null);setShowForm(true);}} style={{background:"#F05881"}} className="hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg font-medium">+ Add</button>
+          <button onClick={()=>{setEditItem(null);setShowForm(true);}} style={{background:"#F05881"}}
+            className="hover:opacity-90 text-white text-sm px-4 py-2.5 md:py-2 rounded-lg font-medium">+ Add</button>
         </div>
       </div>
 
@@ -87,7 +98,7 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{background:STAGE_META[stage].color}} />
-                    <span className="text-xs font-semibold text-stone-600">{isMobile ? stage.split(" ")[0] : stage}</span>
+                    <span className="text-xs font-semibold text-stone-600">{isMobile?stage.split(" ")[0]:stage}</span>
                   </div>
                   <span className="text-xs text-stone-400">{stageItems.length}</span>
                 </div>
@@ -155,15 +166,6 @@ export function Pipeline({ items, setItems, campaigns, products, setProducts }) 
 }
 
 // ── CALENDAR ──────────────────────────────────────────────────────────────
-function getItemColor(item, products) {
-  if (item.product && products?.length) {
-    const matched = products.find(p => p.name === item.product);
-    if (matched) return { color: matched.color, border: matched.border };
-  }
-  const mc = STAGE_META[item.stage] || STAGE_META["Idea"];
-  return { color: mc.color };
-}
-
 export function Calendar({ items, setItems, campaigns, products, setProducts }) {
   const isMobile = useIsMobile();
   const today = new Date();
@@ -186,6 +188,13 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
   const daysInMonth = new Date(year,month+1,0).getDate();
   const gapData = Array.from({length:daysInMonth},(_,i)=>itemsForKey(dateKey(year,month,i+1)).length);
   const maxGap = Math.max(...gapData,1);
+  const prevMonth = () => { if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1); };
+  const nextMonth = () => { if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1); };
+  const prevWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); };
+  const nextWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); };
+  const weekDays = Array.from({length:7},(_,i)=>{ const d=new Date(weekStart); d.setDate(d.getDate()+i); return d; });
+  const firstDay = new Date(year,month,1).getDay();
+  const cells = Array.from({length:firstDay+daysInMonth},(_,i)=>i<firstDay?null:i-firstDay+1);
 
   const CalCell = ({dateStr,dayNum,isToday}) => {
     const dayItems = itemsForKey(dateStr);
@@ -195,13 +204,13 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
         <div className="space-y-0.5">
           {dayItems.map(item=>{
             const thumb = driveThumb(item.driveUrl);
-            const { color, border } = getItemColor(item, products);
+            const { color } = getItemColor(item, products);
             return (
               <div key={item.id} onClick={e=>{e.stopPropagation();openEdit(item);}} className="cursor-pointer rounded overflow-hidden" style={{border:`1px solid ${color}33`}}>
                 {thumb && view==="week" && <img src={thumb} alt="" className="w-full object-cover" style={{height:56}} onError={e=>e.target.style.display="none"} />}
                 <div className="px-1.5 py-0.5" style={{background:color+"22"}}>
                   <p className="text-xs font-medium truncate" style={{color}}>{item.title}</p>
-                  {view==="week"&&item.draftCopy && <p className="text-xs text-stone-400 line-clamp-2 mt-0.5">{item.draftCopy}</p>}
+                  {view==="week" && item.draftCopy && <p className="text-xs text-stone-400 line-clamp-2 mt-0.5">{item.draftCopy}</p>}
                 </div>
               </div>
             );
@@ -211,38 +220,29 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
     );
   };
 
-  // Mobile: upcoming content list
+  // ── Mobile list view ──
   if (isMobile) {
-    const upcoming = [...items]
-      .filter(i => i.date)
-      .sort((a,b) => a.date.localeCompare(b.date));
-    const undated = items.filter(i => !i.date);
-    const grouped = upcoming.reduce((acc, item) => {
-      acc[item.date] = acc[item.date] || [];
-      acc[item.date].push(item);
-      return acc;
-    }, {});
-
+    const upcoming = [...items].filter(i=>i.date).sort((a,b)=>a.date.localeCompare(b.date));
+    const undated = items.filter(i=>!i.date);
+    const grouped = upcoming.reduce((acc,item)=>{ acc[item.date]=acc[item.date]||[]; acc[item.date].push(item); return acc; },{});
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-stone-800">Calendar</h2>
           <button onClick={()=>openNew()} style={{background:"#F05881"}} className="hover:opacity-90 text-white text-sm px-4 py-3 rounded-lg font-medium">+ Add</button>
         </div>
-        {Object.keys(grouped).length === 0 && undated.length === 0 && (
-          <p className="text-stone-400 text-sm">No content scheduled yet.</p>
-        )}
-        {Object.entries(grouped).map(([date, dayItems]) => {
-          const d = new Date(date + "T00:00:00");
+        {Object.keys(grouped).length===0 && undated.length===0 && <p className="text-stone-400 text-sm">No content scheduled yet.</p>}
+        {Object.entries(grouped).map(([date,dayItems])=>{
+          const d = new Date(date+"T00:00:00");
           const isPast = d < new Date(today.toDateString());
           return (
             <div key={date} className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color: isPast ? "#a8a29e" : "#F05881"}}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:isPast?"#a8a29e":"#F05881"}}>
                 {d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
-                {d.toDateString() === today.toDateString() && " · Today"}
+                {d.toDateString()===today.toDateString()&&" · Today"}
               </p>
-              {dayItems.map(item => {
-                const { color, border } = getItemColor(item, products);
+              {dayItems.map(item=>{
+                const { color } = getItemColor(item, products);
                 const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
                 const channels = Array.isArray(item.channels)?item.channels:[];
                 const thumb = driveThumb(item.driveUrl);
@@ -256,7 +256,7 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
                       {campaign && <p className="text-xs mt-0.5" style={{color:"#F05881"}}>↗ {campaign.name}</p>}
                       {item.draftCopy && <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">{item.draftCopy}</p>}
                       <div className="flex gap-1 mt-1 flex-wrap">
-                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:color+"22",color:color}}>{item.stage}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:color+"22",color}}>{item.stage}</span>
                         {channels.slice(0,2).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
                       </div>
                     </div>
@@ -266,21 +266,21 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
             </div>
           );
         })}
-        {undated.length > 0 && (
+        {undated.length>0 && (
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-stone-400">Unscheduled</p>
-            {undated.map(item => {
-              const mc = STAGE_META[item.stage]||STAGE_META["Idea"];
+            {undated.map(item=>{
+              const { color } = getItemColor(item, products);
               const campaign = campaigns.find(c=>String(c.id)===String(item.campaignId));
               const channels = Array.isArray(item.channels)?item.channels:[];
               return (
                 <div key={item.id} onClick={()=>openEdit(item)}
                   className="bg-white rounded-xl border border-stone-100 p-3.5 mb-2 cursor-pointer"
-                  style={{borderLeft:`3px solid ${mc.color}`}}>
+                  style={{borderLeft:`3px solid ${color}`}}>
                   <p className="font-medium text-stone-800 text-sm">{item.title}</p>
                   {campaign && <p className="text-xs mt-0.5" style={{color:"#F05881"}}>↗ {campaign.name}</p>}
                   <div className="flex gap-1 mt-1 flex-wrap">
-                    <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:mc.color+"22",color:mc.color}}>{item.stage}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:color+"22",color}}>{item.stage}</span>
                     {channels.slice(0,2).map(ch=><Tag key={ch} label={ch} colorClass="bg-stone-100 text-stone-500" />)}
                   </div>
                 </div>
@@ -299,15 +299,7 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
     );
   }
 
-  // Desktop calendar
-  const cells = Array.from({length:firstDay+daysInMonth},(_,i)=>i<firstDay?null:i-firstDay+1);
-  // Desktop calendar return
-  const weekDays = Array.from({length:7},(_,i)=>{ const d=new Date(weekStart); d.setDate(d.getDate()+i); return d; });
-  const prevWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); };
-  const nextWeek = () => { const d=new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); };
-  const prevMonth = () => { if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1); };
-  const nextMonth = () => { if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1); };
-
+  // ── Desktop calendar ──
   return (
     <div>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -361,7 +353,7 @@ export function Calendar({ items, setItems, campaigns, products, setProducts }) 
           <p className="text-xs text-stone-400 mb-4">Color intensity shows content volume. Light = sparse, dark = busy.</p>
           <div className="grid gap-1" style={{gridTemplateColumns:"repeat(7,1fr)"}}>
             {DAY_NAMES.map(d=><div key={d} className="text-center text-xs text-stone-400 font-medium py-1">{d}</div>)}
-            {Array.from({length:new Date(year,month,1).getDay()}).map((_,i)=><div key={`e${i}`}/>)}
+            {Array.from({length:firstDay}).map((_,i)=><div key={`e${i}`}/>)}
             {gapData.map((count,i)=>{
               const d=i+1, key=dateKey(year,month,d);
               const bg=count===0?"#f7f6f5":`rgba(240,88,129,${0.15+(count/maxGap)*0.75})`;
@@ -463,7 +455,7 @@ export function Captions({ brandVoice }) {
         <Sel label="Tone direction" options={["On-brand default","More poetic","More direct","Playful","Educational","Hype / launch energy"]} value={tone} onChange={e=>setTone(e.target.value)} />
         <button onClick={generate} disabled={loading||!context.trim()}
           style={loading||!context.trim()?{}:{background:"#F05881"}}
-          className="w-full disabled:bg-stone-200 disabled:text-stone-400 text-white py-2.5 rounded-lg font-medium text-sm mt-1 hover:opacity-90">
+          className="w-full disabled:bg-stone-200 disabled:text-stone-400 text-white py-3 md:py-2.5 rounded-lg font-medium text-sm mt-1 hover:opacity-90">
           {loading?"Generating...":"Generate Captions"}
         </button>
       </div>
